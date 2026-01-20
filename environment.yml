@@ -8,6 +8,7 @@ dependencies:
   - aiohttp=3.13.3=py310h31b6992_0
   - aiosignal=1.4.0=pyhd8ed1ab_0
   - aom=3.9.1=hac33072_0
+  - asttokens=3.0.1=pyhd8ed1ab_0
   - async-timeout=5.0.1=pyhcf101f3_2
   - attrs=25.4.0=pyhcf101f3_1
   - blosc=1.21.5=h0f2a231_0
@@ -19,6 +20,9 @@ dependencies:
   - charls=2.4.2=h59595ed_0
   - colorama=0.4.6=pyhd8ed1ab_1
   - dav1d=1.2.1=hd590300_0
+  - decorator=5.2.1=pyhd8ed1ab_0
+  - exceptiongroup=1.3.1=pyhd8ed1ab_0
+  - executing=2.2.1=pyhd8ed1ab_0
   - freetype=2.12.1=h267a509_2
   - frozenlist=1.7.0=py310h9548a50_0
   - giflib=5.2.2=hd590300_0
@@ -27,6 +31,8 @@ dependencies:
   - imagecodecs=2024.1.1=py310h496a806_0
   - imageio=2.37.0=pyhfb79c49_0
   - importlib-metadata=8.7.0=pyhe01879c_1
+  - ipython=8.37.0=pyh8f84b5b_0
+  - jedi=0.19.2=pyhd8ed1ab_1
   - jxrlib=1.1=hd590300_3
   - lazy-loader=0.4=pyhd8ed1ab_2
   - lcms2=2.16=hb7c19ff_0
@@ -68,6 +74,7 @@ dependencies:
   - libzopfli=1.0.3=h9c3ff4c_0
   - llvm-openmp=15.0.7=h0cdce71_0
   - lz4-c=1.9.4=hcb278e6_0
+  - matplotlib-inline=0.2.1=pyhd8ed1ab_0
   - mkl=2023.2.0=ha770c72_50498
   - multidict=6.7.0=py310h3406613_0
   - ncurses=6.5=h2d0b736_3
@@ -75,12 +82,19 @@ dependencies:
   - openjpeg=2.5.2=h488ebb8_0
   - openssl=3.6.0=h26f9b46_0
   - packaging=25.0=pyh29332c3_1
+  - parso=0.8.5=pyhcf101f3_0
+  - pexpect=4.9.0=pyhd8ed1ab_1
+  - pickleshare=0.7.5=pyhd8ed1ab_1004
   - pillow=10.3.0=py310hf73ecf8_0
   - pip=25.3=pyh8b19718_0
+  - prompt-toolkit=3.0.52=pyha770c72_0
   - propcache=0.3.1=py310h89163eb_0
   - psutil=7.2.1=py310h139afa4_0
   - pthread-stubs=0.4=hb9d3cd8_1002
+  - ptyprocess=0.7.0=pyhd8ed1ab_1
+  - pure_eval=0.2.3=pyhd8ed1ab_1
   - pydicom=3.0.1=pyhd8ed1ab_2
+  - pygments=2.19.2=pyhd8ed1ab_0
   - python=3.10.14=hd12c33a_0_cpython
   - python_abi=3.10=8_cp310
   - pywavelets=1.8.0=py310hf462985_0
@@ -89,13 +103,16 @@ dependencies:
   - readline=8.3=h853b02a_0
   - scikit-image=0.25.2=py310h0158d43_2
   - snappy=1.1.10=hdb0a2a9_1
+  - stack_data=0.6.3=pyhd8ed1ab_1
   - svt-av1=3.1.2=hecca717_0
   - tbb=2021.7.0=h924138e_0
   - tifffile=2024.12.12=pyhd8ed1ab_0
   - tk=8.6.13=noxft_h4845f30_101
   - tqdm=4.67.1=pyhd8ed1ab_1
+  - traitlets=5.14.3=pyhd8ed1ab_1
   - typing-extensions=4.15.0=h396c80c_0
   - typing_extensions=4.15.0=pyhcf101f3_0
+  - wcwidth=0.2.14=pyhd8ed1ab_0
   - wheel=0.45.1=pyhd8ed1ab_1
   - xorg-libxau=1.0.12=hb03c661_1
   - xorg-libxdmcp=1.1.5=hb03c661_1
