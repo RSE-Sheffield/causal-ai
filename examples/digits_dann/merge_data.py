@@ -77,7 +77,7 @@ def main():
     if 'error' in merged_df.columns:
         failed = merged_df['error'].notna().sum()
         if failed > 0:
-            print(f" Failed runs: {failed}")
+            print(f"Failed runs: {failed}")
         else:
             print(f"  ✓ All runs successful!")
 
