@@ -38,6 +38,7 @@ def main():
 
     if not csv_files:
         print(f"No CSV files found in {input_dir}")
+        return
 
     print(f"Found {len(csv_files)} CSV files to merge")
 
