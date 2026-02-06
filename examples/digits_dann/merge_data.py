@@ -5,7 +5,7 @@ After running parallel jobs, this script merges all individual CSV files
 into a single comprehensive dataset.
 
 Usage:
-    python merge_results.py --input_dir ./data/parallel --output ./data/grid_search_results.csv
+    python merge_data.py --input_dir ./data/parallel --output ./data/grid_search_results.csv
 """
 
 import argparse
