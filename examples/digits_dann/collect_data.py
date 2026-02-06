@@ -4,7 +4,7 @@ DANN Domain Adaptation Data Collection
 Grid: 4 batch x 2 optimisers x 4 learning rates x 4 precisions x 3 methods x 5 seeds = 960 runs
 
 Usage:
-    python dann_data_collector_fixed_expanded.py \
+    python collect_data.py \
         --pykale_path /path/to/pykale \
         --output_dir ./data \
         --job_id 0 \
