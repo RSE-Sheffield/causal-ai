@@ -403,7 +403,7 @@ def main():
             device=args.devices,
         )
 
-        # Tracka all runs
+        # Track all runs
         if success:
             successful_runs += 1
         else:
