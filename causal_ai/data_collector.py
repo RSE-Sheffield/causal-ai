@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
-import torch
 
 logger = logging.getLogger(__name__)
 
