@@ -153,7 +153,7 @@ class PyKaleCausalDataCollector:
         logger.info(f"Exported {len(df)} runs to {self.output_path}")
         logger.info(f"Columns captured: {list(df.columns)}")
 
-        logger.info("\n=== Data summary  ===")
+        logger.info("\n=== Data summary ===")
         logger.info(f"Total runs: {len(df)}")
         logger.info(f"Unique variables combinations")
         for col in df.columns:
