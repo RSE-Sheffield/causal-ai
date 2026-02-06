@@ -46,7 +46,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Main script for the DANN data collection and experiment runner")
     parser.add_argument("--pykale_path", type=str, required=True, help="Path to the cloned PyKale repo")
     parser.add_argument("--output_dir", type=str, default="./data", help="Directory where the csv files will be saved")
-    parser.add_argument("--job_id", type=int, required=True, help="Index of the job (used for parallel runs on HPC")
+    parser.add_argument("--job_id", type=int, required=True, help="Index of the job (used for parallel runs on HPC)")
     parser.add_argument("--total_jobs", type=int, required=True, help="Total number of jobs the experiment is split into")
     parser.add_argument("--devices", default="auto", help="Compute devices to use (e.g. 'cpu', 'gpu' or 'auto')")
     return parser.parse_args()
