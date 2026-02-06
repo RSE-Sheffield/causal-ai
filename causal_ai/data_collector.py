@@ -183,4 +183,4 @@ class PyKaleCausalDataCollector:
 
         df = pd.DataFrame(self.data_records)
         df.to_csv(checkpoint_path, index=False)
-        logger.info(f"Checkpoint saved; {len(df)} runs to {checkpoint_path}")
+        logger.info(f"Checkpoint saved: {len(df)} runs to {checkpoint_path}")
