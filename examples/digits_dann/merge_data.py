@@ -5,7 +5,7 @@ After running parallel jobs, this script merges all individual CSV files
 into a single comprehensive dataset.
 
 Usage:
-    python merge_results.py --input_dir ./data/parallel --output ./data/grid_search_results.csv
+    python merge_data.py --input_dir ./data/parallel --output ./data/grid_search_results.csv
 """
 
 import argparse
@@ -38,6 +38,7 @@ def main():
 
     if not csv_files:
         print(f"No CSV files found in {input_dir}")
+        return
 
     print(f"Found {len(csv_files)} CSV files to merge")
 
@@ -77,7 +78,7 @@ def main():
     if 'error' in merged_df.columns:
         failed = merged_df['error'].notna().sum()
         if failed > 0:
-            print(f" Failed runs: {failed}")
+            print(f"Failed runs: {failed}")
         else:
             print(f"  ✓ All runs successful!")
 

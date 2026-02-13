@@ -4,7 +4,7 @@ DANN Domain Adaptation Data Collection
 Grid: 4 batch x 2 optimisers x 4 learning rates x 4 precisions x 3 methods x 5 seeds = 960 runs
 
 Usage:
-    python dann_data_collector_fixed_expanded.py \
+    python collect_data.py \
         --pykale_path /path/to/pykale \
         --output_dir ./data \
         --job_id 0 \
@@ -46,7 +46,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Main script for the DANN data collection and experiment runner")
     parser.add_argument("--pykale_path", type=str, required=True, help="Path to the cloned PyKale repo")
     parser.add_argument("--output_dir", type=str, default="./data", help="Directory where the csv files will be saved")
-    parser.add_argument("--job_id", type=int, required=True, help="Index of the job (used for parallel runs on HPC")
+    parser.add_argument("--job_id", type=int, required=True, help="Index of the job (used for parallel runs on HPC)")
     parser.add_argument("--total_jobs", type=int, required=True, help="Total number of jobs the experiment is split into")
     parser.add_argument("--devices", default="auto", help="Compute devices to use (e.g. 'cpu', 'gpu' or 'auto')")
     return parser.parse_args()
@@ -403,7 +403,7 @@ def main():
             device=args.devices,
         )
 
-        # Tracka all runs
+        # Track all runs
         if success:
             successful_runs += 1
         else:

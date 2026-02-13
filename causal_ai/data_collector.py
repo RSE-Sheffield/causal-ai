@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
-import torch
 
 logger = logging.getLogger(__name__)
 
@@ -153,7 +152,7 @@ class PyKaleCausalDataCollector:
         logger.info(f"Exported {len(df)} runs to {self.output_path}")
         logger.info(f"Columns captured: {list(df.columns)}")
 
-        logger.info("\n=== Data summary  ===")
+        logger.info("\n=== Data summary ===")
         logger.info(f"Total runs: {len(df)}")
         logger.info(f"Unique variables combinations")
         for col in df.columns:
@@ -183,4 +182,4 @@ class PyKaleCausalDataCollector:
 
         df = pd.DataFrame(self.data_records)
         df.to_csv(checkpoint_path, index=False)
-        logger.info(f"Checkpoint saved; {len(df)} runs to {checkpoint_path}")
+        logger.info(f"Checkpoint saved: {len(df)} runs to {checkpoint_path}")
