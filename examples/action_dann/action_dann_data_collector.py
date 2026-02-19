@@ -31,6 +31,7 @@ warnings.filterwarnings('ignore', '.*Tensor Cores.*')
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from causal_ai.data_collector import PyKaleCausalDataCollector
+from examples.action_dann.utils.utils import ensure_dataset
 
 from kale.loaddata.video_access import VideoDataset
 from kale.loaddata.video_multi_domain import VideoBiDomainDatasets
@@ -371,6 +372,8 @@ def main():
 
     output_csv = Path(args.output_dir) / f"action_results_job{args.job_id:03d}.csv"
     collector = PyKaleCausalDataCollector(str(output_csv))
+
+    ensure_dataset(args.dataset_root)
 
     pykale_path = Path(args.pykale_path)
 
