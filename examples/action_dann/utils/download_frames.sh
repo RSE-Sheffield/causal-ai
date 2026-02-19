@@ -96,31 +96,19 @@ echo "Destination: $FRAMES_DIR"
 echo "Videos: ${#TASKS[@]} total, $MAX_PARALLEL in parallel"
 echo ""
 
-# --- download in parallel ---
+# --- download in parallel (batches of MAX_PARALLEL) ---
 
-active=0
-failures=0
-
+batch=0
 for task in "${TASKS[@]}"; do
     download_and_extract $task &
-    active=$((active + 1))
+    batch=$((batch + 1))
 
-    if ((active >= MAX_PARALLEL)); then
-        wait -n || failures=$((failures + 1))
-        active=$((active - 1))
+    if ((batch >= MAX_PARALLEL)); then
+        wait
+        batch=0
     fi
 done
-
-# drain remaining jobs
-while ((active > 0)); do
-    wait -n || failures=$((failures + 1))
-    active=$((active - 1))
-done
+wait
 
 echo ""
-if ((failures > 0)); then
-    echo "Finished with $failures failed downloads. Re-run to retry them."
-    exit 1
-else
-    echo "Done. All ${#TASKS[@]} videos downloaded to: $FRAMES_DIR"
-fi
+echo "Done. Frames are at: $FRAMES_DIR"
