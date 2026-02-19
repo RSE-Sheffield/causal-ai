@@ -103,18 +103,18 @@ failures=0
 
 for task in "${TASKS[@]}"; do
     download_and_extract $task &
-    ((active++))
+    active=$((active + 1))
 
     if ((active >= MAX_PARALLEL)); then
-        wait -n || ((failures++))
-        ((active--))
+        wait -n || failures=$((failures + 1))
+        active=$((active - 1))
     fi
 done
 
 # drain remaining jobs
 while ((active > 0)); do
-    wait -n || ((failures++))
-    ((active--))
+    wait -n || failures=$((failures + 1))
+    active=$((active - 1))
 done
 
 echo ""
