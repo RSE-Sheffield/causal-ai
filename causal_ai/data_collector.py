@@ -124,6 +124,12 @@ class PyKaleCausalDataCollector:
         elif device == "gpu":
             self.current_run["gpu_memory_peak_mb"] = peak_memory_mb
 
+    def log_dataset_info(self, train_size: int = 0, valid_size: int = 0, test_size: int = 0) -> None:
+        """Log dataset size information for the current run."""
+        self.current_run["train_dataset_size"] = train_size
+        self.current_run["valid_dataset_size"] = valid_size
+        self.current_run["test_dataset_size"] = test_size
+
     def save_run(self) -> None:
         """Save the current run and reset for next run"""
         if self.current_run:
@@ -152,7 +158,7 @@ class PyKaleCausalDataCollector:
         logger.info(f"Exported {len(df)} runs to {self.output_path}")
         logger.info(f"Columns captured: {list(df.columns)}")
 
-        logger.info("\n=== Data summary ===")
+        logger.info("\n=== Data summary  ===")
         logger.info(f"Total runs: {len(df)}")
         logger.info(f"Unique variables combinations")
         for col in df.columns:
@@ -182,4 +188,4 @@ class PyKaleCausalDataCollector:
 
         df = pd.DataFrame(self.data_records)
         df.to_csv(checkpoint_path, index=False)
-        logger.info(f"Checkpoint saved: {len(df)} runs to {checkpoint_path}")
+        logger.info(f"Checkpoint saved; {len(df)} runs to {checkpoint_path}")
