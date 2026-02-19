@@ -1,26 +1,35 @@
 #!/bin/bash
+#SBATCH --job-name=epic-frames
+#SBATCH --time=02:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=8G
+#SBATCH --output=logs/download_frames_%j.out
+#SBATCH --error=logs/download_frames_%j.err
 #
 # Downloads and extracts EPIC-Kitchens RGB frames for domains D1 (P08),
 # D2 (P01) and D3 (P22) into the layout PyKale expects:
 #
 #   <root>/EPIC/EPIC_KITCHENS_2018/frames_rgb_flow/rgb/{train,test}/P{xx}/P{xx}_{yy}/frame_*.jpg
 #
-# Only RGB frames are downloaded (the action_dann config uses image_modality=rgb).
-# If you also need optical flow, change MODALITIES below.
-#
 # Usage:
-#   bash download_frames.sh /mnt/parscratch/users/cs1fxa/datasets/EgoAction
+#   sbatch download_frames.sh /mnt/parscratch/users/cs1fxa/datasets/EgoAction
+#   bash  download_frames.sh /mnt/parscratch/users/cs1fxa/datasets/EgoAction   # also works locally
 #
-# The script is resumable — already-extracted videos are skipped.
+# Resumable — already-extracted videos are skipped.
 
 set -euo pipefail
 
-DATASET_ROOT="${1:?Usage: $0 <dataset_root>}"
+mkdir -p logs 2>/dev/null || true
+
+DATASET_ROOT="${1:-/mnt/parscratch/users/cs1fxa/datasets/EgoAction}"
 FRAMES_DIR="$DATASET_ROOT/EPIC/EPIC_KITCHENS_2018/frames_rgb_flow"
 BASE_URL="https://data.bris.ac.uk/datasets/3h91syskeag572hl6tvuovwv4d/frames_rgb_flow"
 
-# Change to "rgb flow" if you need optical flow as well.
-MODALITIES="rgb"
+# How many videos to download at once. 8 is a good balance between
+# speed and not hammering the Bristol server.
+MAX_PARALLEL=8
 
 if ! command -v wget &>/dev/null; then
     echo "Error: wget is not installed." >&2
@@ -33,17 +42,25 @@ download_and_extract() {
 
     # skip if already extracted
     if [ -d "$dest/$video" ]; then
-        return
+        echo "  [skip] $modality/$split/$participant/$video"
+        return 0
     fi
 
-    mkdir -p "$dest"
+    mkdir -p "$dest/$video"
     local url="$BASE_URL/$modality/$split/$participant/$video.tar"
-    local tar_file="$dest/$video.tar"
+    local tar_file="$dest/${video}_$$.tar"
 
-    echo "  $modality/$split/$participant/$video"
-    wget -q --continue -O "$tar_file" "$url"
-    tar -xf "$tar_file" -C "$dest"
+    echo "  [get]  $modality/$split/$participant/$video"
+    if ! wget -q --continue -O "$tar_file" "$url"; then
+        echo "  [FAIL] $modality/$split/$participant/$video — download failed" >&2
+        rm -f "$tar_file"
+        rmdir "$dest/$video" 2>/dev/null || true
+        return 1
+    fi
+
+    tar -xf "$tar_file" -C "$dest/$video"
     rm -f "$tar_file"
+    echo "  [done] $modality/$split/$participant/$video"
 }
 
 # --- video lists (from MM-SADA domain adaptation splits) ---
@@ -64,21 +81,46 @@ P22_TRAIN="P22_05 P22_06 P22_07 P22_08 P22_09 P22_10 P22_11 P22_12
            P22_13 P22_14 P22_15 P22_16 P22_17"
 P22_TEST="P22_01 P22_02 P22_03 P22_04"
 
-# --- download ---
+# --- build flat task list ---
 
-for modality in $MODALITIES; do
-    echo "=== $modality ==="
+TASKS=()
+for v in $P08_TRAIN; do TASKS+=("rgb train P08 $v"); done
+for v in $P01_TRAIN; do TASKS+=("rgb train P01 $v"); done
+for v in $P22_TRAIN; do TASKS+=("rgb train P22 $v"); done
+for v in $P08_TEST;  do TASKS+=("rgb test  P08 $v"); done
+for v in $P01_TEST;  do TASKS+=("rgb test  P01 $v"); done
+for v in $P22_TEST;  do TASKS+=("rgb test  P22 $v"); done
 
-    echo "--- train ---"
-    for v in $P08_TRAIN; do download_and_extract "$modality" train P08 "$v"; done
-    for v in $P01_TRAIN; do download_and_extract "$modality" train P01 "$v"; done
-    for v in $P22_TRAIN; do download_and_extract "$modality" train P22 "$v"; done
+echo "=== EPIC-Kitchens frame download ==="
+echo "Destination: $FRAMES_DIR"
+echo "Videos: ${#TASKS[@]} total, $MAX_PARALLEL in parallel"
+echo ""
 
-    echo "--- test ---"
-    for v in $P08_TEST; do download_and_extract "$modality" test P08 "$v"; done
-    for v in $P01_TEST; do download_and_extract "$modality" test P01 "$v"; done
-    for v in $P22_TEST; do download_and_extract "$modality" test P22 "$v"; done
+# --- download in parallel ---
+
+active=0
+failures=0
+
+for task in "${TASKS[@]}"; do
+    download_and_extract $task &
+    ((active++))
+
+    if ((active >= MAX_PARALLEL)); then
+        wait -n || ((failures++))
+        ((active--))
+    fi
+done
+
+# drain remaining jobs
+while ((active > 0)); do
+    wait -n || ((failures++))
+    ((active--))
 done
 
 echo ""
-echo "Done. Frames are at: $FRAMES_DIR"
+if ((failures > 0)); then
+    echo "Finished with $failures failed downloads. Re-run to retry them."
+    exit 1
+else
+    echo "Done. All ${#TASKS[@]} videos downloaded to: $FRAMES_DIR"
+fi
