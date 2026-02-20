@@ -40,8 +40,8 @@ download_and_extract() {
     local modality="$1" split="$2" participant="$3" video="$4"
     local dest="$FRAMES_DIR/$modality/$split/$participant"
 
-    # skip if already extracted
-    if [ -d "$dest/$video" ]; then
+    # skip if already extracted (check for actual frames, not just the directory)
+    if ls "$dest/$video"/frame_*.jpg &>/dev/null; then
         echo "  [skip] $modality/$split/$participant/$video"
         return 0
     fi
