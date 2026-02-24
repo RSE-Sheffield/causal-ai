@@ -79,6 +79,10 @@ def parse_args():
     parser.add_argument("--model_method", type=str, default="i3d",
                         choices=["r3d_18", "r2plus1d_18", "mc3_18", "i3d"],
                         help="Video backbone architecture (default: i3d)")
+    parser.add_argument("--max_epochs", type=int, default=None,
+                        help="Override max epochs (default: use config value)")
+    parser.add_argument("--fast_dev_run", action="store_true",
+                        help="Run 1 batch of train/val/test to verify the pipeline works")
     return parser.parse_args()
 
 
@@ -96,7 +100,7 @@ def get_base_config(dataset_root, domain_pair_name, model_method):
     cfg.DATASET.TGT_TRAINLIST = domain_pair['tgt_trainlist']
     cfg.DATASET.TGT_TESTLIST = domain_pair['tgt_testlist']
     cfg.DATASET.IMAGE_MODALITY = "rgb"
-    cfg.DATASET.FRAMES_PER_SEGMENT = 16
+    cfg.DATASET.FRAMES_PER_SEGMENT = 8
     cfg.DATASET.NUM_REPEAT = 1
     cfg.DATASET.WEIGHT_TYPE = "natural"
     cfg.DATASET.SIZE_TYPE = "max"
@@ -108,8 +112,8 @@ def get_base_config(dataset_root, domain_pair_name, model_method):
     cfg.SOLVER.MOMENTUM = 0.9
     cfg.SOLVER.WEIGHT_DECAY = 0.0005
     cfg.SOLVER.NESTEROV = True
-    cfg.SOLVER.MAX_EPOCHS = 30
-    cfg.SOLVER.MIN_EPOCHS = 5
+    cfg.SOLVER.MAX_EPOCHS = 10
+    cfg.SOLVER.MIN_EPOCHS = 3
     cfg.SOLVER.TRAIN_BATCH_SIZE = 16
     cfg.SOLVER.LOG_EVERY_N_STEPS = 10
     cfg.SOLVER.AD_LAMBDA = True
@@ -206,8 +210,24 @@ class MemoryTracker:
         return torch.cuda.max_memory_allocated() / 1024 / 1024
 
 
+class EpochTimerCallback(pl.Callback):
+    """Logs wall-clock time at the end of each training epoch."""
+
+    def __init__(self):
+        self.epoch_start = None
+
+    def on_train_epoch_start(self, trainer, pl_module):
+        self.epoch_start = time.time()
+
+    def on_train_epoch_end(self, trainer, pl_module):
+        elapsed = time.time() - self.epoch_start
+        epoch = trainer.current_epoch
+        logger.info(f"Epoch {epoch + 1}/{trainer.max_epochs} completed in {elapsed:.1f}s")
+
+
 def run_single_experiment(cfg, dataset, num_classes, pykale_path, collector,
-                          fp_precision, optimiser_name, run_id, device, domain_pair_name):
+                          fp_precision, optimiser_name, run_id, device, domain_pair_name,
+                          fast_dev_run=False):
     try:
         if fp_precision == 'tf32':
             torch.set_float32_matmul_precision('medium')
@@ -258,17 +278,20 @@ def run_single_experiment(cfg, dataset, num_classes, pykale_path, collector,
         else:
             raise ValueError(f"Unknown precision: {fp_precision}")
 
+        epoch_timer = EpochTimerCallback()
+
         trainer = pl.Trainer(
             min_epochs=cfg.SOLVER.MIN_EPOCHS,
             max_epochs=cfg.SOLVER.MAX_EPOCHS,
             accelerator="auto" if device == "auto" else ("gpu" if device != "cpu" else "cpu"),
             devices=1 if device != "auto" else "auto",
             precision=precision_setting,
-            callbacks=[checkpoint_callback],
+            callbacks=[checkpoint_callback, epoch_timer],
             logger=logger_pl,
             log_every_n_steps=cfg.SOLVER.LOG_EVERY_N_STEPS,
             enable_progress_bar=False,
             enable_model_summary=False,
+            fast_dev_run=fast_dev_run,
         )
 
         collector.start_timer('training')
@@ -391,6 +414,8 @@ def main():
         cfg.SOLVER.TRAIN_BATCH_SIZE = params['batch_size']
         cfg.DAN.METHOD = params['adaptation_method']
         cfg.SOLVER.SEED = params['seed']
+        if args.max_epochs is not None:
+            cfg.SOLVER.MAX_EPOCHS = args.max_epochs
 
         cfg.SOLVER.TYPE = params['optimiser']
         cfg.SOLVER.WEIGHT_DECAY = 0.0005
@@ -412,10 +437,12 @@ def main():
             failed_runs += 1
             continue
 
-        logger.info(f"[{idx + 1}/{total_runs}] Run {idx}: "
-                   f"LR={params['learning_rate']:.0e}, BS={params['batch_size']}, "
-                   f"Opt={params['optimiser']}, FP={params['fp_precision']}, "
-                   f"Method={params['adaptation_method']}, Seed={params['seed']}")
+        logger.info("=" * 80)
+        logger.info(f"Run {idx} ({idx + 1}/{total_runs})")
+        logger.info(f"Method: {params['adaptation_method']}, Precision: {params['fp_precision']}, Seed: {params['seed']}")
+        logger.info(f"Batch: {params['batch_size']}, Optimizer: {params['optimiser']}, LR: {params['learning_rate']}")
+        logger.info(f"Domain: {args.domain_pair}, Model: {args.model_method}")
+        logger.info("=" * 80)
 
         success = run_single_experiment(
             cfg=cfg,
@@ -428,6 +455,7 @@ def main():
             run_id=idx,
             device=args.devices,
             domain_pair_name=args.domain_pair,
+            fast_dev_run=args.fast_dev_run,
         )
 
         if success:
