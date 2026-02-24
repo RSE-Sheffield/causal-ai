@@ -105,6 +105,7 @@ def get_base_config(dataset_root, domain_pair_name, model_method):
     cfg.DATASET.NUM_REPEAT = 1
     cfg.DATASET.WEIGHT_TYPE = "natural"
     cfg.DATASET.SIZE_TYPE = "max"
+    cfg.DATASET.VALID_SPLIT_RATIO = 0.1
 
     cfg.SOLVER = CfgNode()
     cfg.SOLVER.SEED = 2025
