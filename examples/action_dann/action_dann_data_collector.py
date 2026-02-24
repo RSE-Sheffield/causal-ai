@@ -15,6 +15,7 @@ Usage:
 import argparse
 import logging
 import os
+import random
 import sys
 import time
 import warnings
@@ -115,6 +116,7 @@ def get_base_config(dataset_root, domain_pair_name, model_method):
     cfg.SOLVER.MAX_EPOCHS = 10
     cfg.SOLVER.MIN_EPOCHS = 3
     cfg.SOLVER.TRAIN_BATCH_SIZE = 16
+    cfg.SOLVER.NUM_WORKERS = 4
     cfg.SOLVER.LOG_EVERY_N_STEPS = 10
     cfg.SOLVER.AD_LAMBDA = True
     cfg.SOLVER.AD_LR = True
@@ -381,6 +383,10 @@ def main():
                                 'adaptation_method': adaptation_method,
                                 'seed': seed,
                             })
+
+    # Shuffle so each job gets a mix of batch sizes (deterministic for reproducibility)
+    random.seed(0)
+    random.shuffle(all_combinations)
 
     total_runs = len(all_combinations)
 

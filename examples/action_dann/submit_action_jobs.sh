@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=causal-action
-#SBATCH --array=0-31
+#SBATCH --array=0-239
 #SBATCH --time=08:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
@@ -21,7 +21,7 @@ echo "Optimisers: AdamW (3e-4, 1e-3), SGD (0.03, 0.1)"
 echo "Batch sizes: 4, 8, 16, 32"
 echo "Methods: DAN, DANN, CDAN"
 echo "Seeds: 1, 7, 42, 123, 2023"
-echo "Total: 960 runs (32 jobs, 30 runs each)"
+echo "Total: 960 runs (240 jobs, 4 runs each)"
 echo "Job: $SLURM_ARRAY_TASK_ID"
 echo "Node: $(hostname)"
 echo "=========================================="
@@ -39,7 +39,7 @@ python action_dann_data_collector.py \
     --dataset_root /mnt/parscratch/users/cs1fxa/datasets/EgoAction \
     --output_dir ./data/production \
     --job_id $SLURM_ARRAY_TASK_ID \
-    --total_jobs 32 \
+    --total_jobs 240 \
     --devices auto
 
 echo "=========================================="
