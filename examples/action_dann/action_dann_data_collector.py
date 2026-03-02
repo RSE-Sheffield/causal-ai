@@ -84,6 +84,8 @@ def parse_args():
                         help="Override max epochs (default: use config value)")
     parser.add_argument("--fast_dev_run", action="store_true",
                         help="Run 1 batch of train/val/test to verify the pipeline works")
+    parser.add_argument("--scratch_dir", type=str, default=None,
+                        help="Scratch directory for checkpoints/outputs (avoids home quota issues)")
     return parser.parse_args()
 
 
@@ -136,7 +138,7 @@ def get_base_config(dataset_root, domain_pair_name, model_method):
     cfg.OUTPUT.VERBOSE = False
     cfg.OUTPUT.FAST_DEV_RUN = False
     cfg.OUTPUT.PB_FRESH = 0
-    cfg.OUTPUT.OUT_DIR = "/mnt/parscratch/users/cs1fxa/action_dann_outputs"
+    cfg.OUTPUT.OUT_DIR = "outputs"  # overridden by --scratch_dir if provided
 
     return cfg
 
@@ -420,6 +422,8 @@ def main():
         cfg.SOLVER.SEED = params['seed']
         if args.max_epochs is not None:
             cfg.SOLVER.MAX_EPOCHS = args.max_epochs
+        if args.scratch_dir is not None:
+            cfg.OUTPUT.OUT_DIR = args.scratch_dir
 
         cfg.SOLVER.TYPE = params['optimiser']
         cfg.SOLVER.WEIGHT_DECAY = 0.0005

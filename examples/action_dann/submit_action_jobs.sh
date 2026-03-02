@@ -38,6 +38,7 @@ python action_dann_data_collector.py \
     --pykale_path /users/cs1fxa/projects/pykale \
     --dataset_root /mnt/parscratch/users/cs1fxa/datasets/EgoAction \
     --output_dir ./data/production \
+    --scratch_dir /mnt/parscratch/users/cs1fxa/action_dann_outputs \
     --job_id $SLURM_ARRAY_TASK_ID \
     --total_jobs 240 \
     --devices auto
