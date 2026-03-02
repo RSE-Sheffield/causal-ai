@@ -136,7 +136,7 @@ def get_base_config(dataset_root, domain_pair_name, model_method):
     cfg.OUTPUT.VERBOSE = False
     cfg.OUTPUT.FAST_DEV_RUN = False
     cfg.OUTPUT.PB_FRESH = 0
-    cfg.OUTPUT.OUT_DIR = "outputs"
+    cfg.OUTPUT.OUT_DIR = "/mnt/parscratch/users/cs1fxa/action_dann_outputs"
 
     return cfg
 
@@ -259,15 +259,12 @@ def run_single_experiment(cfg, dataset, num_classes, pykale_path, collector,
         collector.end_timer('model_setup')
         memory_tracker.update()
 
-        outdir = os.path.join(cfg.OUTPUT.OUT_DIR, f"run_{run_id}")
-        os.makedirs(outdir, exist_ok=True)
-
-        logger_pl = pl.loggers.TensorBoardLogger(outdir, name=f"run_{run_id}")
-
         checkpoint_callback = ModelCheckpoint(
+            dirpath=os.path.join(cfg.OUTPUT.OUT_DIR, f"run_{run_id}"),
             filename="{epoch}-{step}-{valid_loss:.4f}",
             monitor="valid_loss",
             mode="min",
+            save_top_k=1,
         )
 
         if fp_precision == "tf32":
@@ -290,7 +287,7 @@ def run_single_experiment(cfg, dataset, num_classes, pykale_path, collector,
             devices=1 if device != "auto" else "auto",
             precision=precision_setting,
             callbacks=[checkpoint_callback, epoch_timer],
-            logger=logger_pl,
+            logger=False,
             log_every_n_steps=cfg.SOLVER.LOG_EVERY_N_STEPS,
             enable_progress_bar=False,
             enable_model_summary=False,
