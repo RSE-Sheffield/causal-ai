@@ -12,8 +12,10 @@ Usage:
 """
 
 import argparse
+import gc
 import logging
 import os
+import random
 import sys
 import time
 import warnings
@@ -49,6 +51,8 @@ def parse_args():
     parser.add_argument("--job_id", type=int, required=True, help="Index of the job (used for parallel runs on HPC)")
     parser.add_argument("--total_jobs", type=int, required=True, help="Total number of jobs the experiment is split into")
     parser.add_argument("--devices", default="auto", help="Compute devices to use (e.g. 'cpu', 'gpu' or 'auto')")
+    parser.add_argument("--scratch_dir", type=str, default=None,
+                        help="Scratch directory for checkpoints/outputs (avoids home quota issues)")
     return parser.parse_args()
 
 
@@ -79,7 +83,6 @@ def get_base_config():
     cfg.SOLVER.NUM_WORKERS = 0
     cfg.SOLVER.TRAIN_BATCH_SIZE = 128
     cfg.SOLVER.TEST_BATCH_SIZE = 200
-    cfg.SOLVER.LOG_EVERY_N_STEPS = 10
     cfg.SOLVER.AD_LAMBDA = True
     cfg.SOLVER.AD_LR = True
     cfg.SOLVER.INIT_LAMBDA = 1.0
@@ -96,13 +99,6 @@ def get_base_config():
 
     cfg.COMET = CfgNode()
     cfg.COMET.ENABLE = False
-
-    cfg.OPTIMIZER = CfgNode()
-    cfg.OPTIMIZER.TYPE = "SGD"
-    cfg.OPTIMIZER.OPTIM_PARAMS = CfgNode()
-    cfg.OPTIMIZER.OPTIM_PARAMS.MOMENTUM = 0.9
-    cfg.OPTIMIZER.OPTIM_PARAMS.WEIGHT_DECAY = 0.0005
-    cfg.OPTIMIZER.OPTIM_PARAMS.NESTEROV = True
 
     return cfg
 
@@ -139,11 +135,10 @@ def setup_dataset(cfg, pykale_path):
         raise
 
 
-def get_model(cfg, dataset, num_channels, pykale_path):
+def get_model(cfg, dataset, num_channels):
     try:
-        sys.path.insert(0, os.path.join(pykale_path, "examples", "digits_dann"))
         from model import get_model as get_dann_model
-        
+
         result = get_dann_model(cfg, dataset, num_channels)
         
         if not isinstance(result, tuple) or len(result) != 2:
@@ -185,7 +180,24 @@ class MemoryTracker:
         return torch.cuda.max_memory_allocated() / 1024 / 1024
 
 
-def run_single_experiment(cfg, dataset, num_channels, pykale_path, collector, fp_precision, optimiser_name, run_id, device):
+class EpochTimerCallback(pl.Callback):
+    """Logs wall-clock time at the end of each training epoch."""
+
+    def __init__(self):
+        self.epoch_start = None
+
+    def on_train_epoch_start(self, trainer, pl_module):
+        self.epoch_start = time.time()
+
+    def on_train_epoch_end(self, trainer, pl_module):
+        elapsed = time.time() - self.epoch_start
+        epoch = trainer.current_epoch
+        logger.info(f"Epoch {epoch + 1}/{trainer.max_epochs} completed in {elapsed:.1f}s")
+
+
+def run_single_experiment(cfg, dataset, num_channels, collector, fp_precision, optimiser_name, run_id, device):
+    model = None
+    trainer = None
     try:
         if fp_precision == 'tf32':
             torch.set_float32_matmul_precision('medium')
@@ -205,19 +217,16 @@ def run_single_experiment(cfg, dataset, num_channels, pykale_path, collector, fp
         memory_tracker = MemoryTracker()
 
         collector.start_timer('model_setup')
-        model, train_params = get_model(cfg, dataset, num_channels, pykale_path)
+        model, train_params = get_model(cfg, dataset, num_channels)
         collector.end_timer('model_setup')
         memory_tracker.update()
 
-        outdir = os.path.join(cfg.OUTPUT.OUT_DIR, f"run_{run_id}")
-        os.makedirs(outdir, exist_ok=True)
-
-        logger_pl = pl.loggers.TensorBoardLogger(outdir, name=f"run_{run_id}")
-
         checkpoint_callback = ModelCheckpoint(
+            dirpath=os.path.join(cfg.OUTPUT.OUT_DIR, f"run_{run_id}"),
             filename="{epoch}-{step}-{valid_loss:.4f}",
             monitor="valid_loss",
             mode="min",
+            save_top_k=1,
         )
 
         if fp_precision == "tf32":
@@ -231,15 +240,16 @@ def run_single_experiment(cfg, dataset, num_channels, pykale_path, collector, fp
         else:
             raise ValueError(f"Unknown precision: {fp_precision}")
 
+        epoch_timer = EpochTimerCallback()
+
         trainer = pl.Trainer(
             min_epochs=cfg.SOLVER.MIN_EPOCHS,
             max_epochs=cfg.SOLVER.MAX_EPOCHS,
             accelerator="auto" if device == "auto" else ("gpu" if device != "cpu" else "cpu"),
             devices=1 if device != "auto" else "auto",
             precision=precision_setting,
-            callbacks=[checkpoint_callback],
-            logger=logger_pl,
-            log_every_n_steps=cfg.SOLVER.LOG_EVERY_N_STEPS,
+            callbacks=[checkpoint_callback, epoch_timer],
+            logger=False,
             enable_progress_bar=False,
             enable_model_summary=False,
         )
@@ -295,6 +305,16 @@ def run_single_experiment(cfg, dataset, num_channels, pykale_path, collector, fp
         collector.save_run()
         return False
 
+    finally:
+        # Free memory between runs to prevent leaks across 960 sequential Trainer.fit() calls
+        if trainer is not None:
+            del trainer
+        if model is not None:
+            del model
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
 
 def main():
     args = parse_args()
@@ -332,6 +352,10 @@ def main():
                                 'seed': seed,
                             })
 
+    # Shuffle so each job gets a mix of batch sizes (deterministic for reproducibility)
+    random.seed(0)
+    random.shuffle(all_combinations)
+
     total_runs = len(all_combinations)
 
     runs_per_job = (total_runs + args.total_jobs - 1) // args.total_jobs
@@ -345,6 +369,17 @@ def main():
     collector = PyKaleCausalDataCollector(str(output_csv))
 
     pykale_path = Path(args.pykale_path)
+
+    # Add PyKale digits_dann to sys.path once (this isneeded for model import)
+    sys.path.insert(0, os.path.join(str(pykale_path), "examples", "digits_dann"))
+
+    # Load dataset once — digits_dann uses fixed pre-split datasets with no seed dependency
+    init_cfg = get_base_config()
+    try:
+        dataset, num_channels = setup_dataset(init_cfg, str(pykale_path))
+    except Exception as e:
+        logger.error(f"Failed to setup dataset: {str(e)}")
+        return
 
     start_time = time.time()
     successful_runs = 0
@@ -363,28 +398,18 @@ def main():
 
         cfg.SOLVER.TYPE = params['optimiser']
         cfg.SOLVER.WEIGHT_DECAY = 0.0005
-        cfg.OPTIMIZER.TYPE = params['optimiser']
-        cfg.OPTIMIZER.OPTIM_PARAMS.WEIGHT_DECAY = 0.0005
 
         if params['optimiser'] == 'SGD':
             cfg.SOLVER.MOMENTUM = 0.9
             cfg.SOLVER.NESTEROV = True
-            cfg.OPTIMIZER.OPTIM_PARAMS.MOMENTUM = 0.9
-            cfg.OPTIMIZER.OPTIM_PARAMS.NESTEROV = True
         else:
             cfg.SOLVER.MOMENTUM = 0.0
             cfg.SOLVER.NESTEROV = False
-            cfg.OPTIMIZER.OPTIM_PARAMS.MOMENTUM = 0.0
-            cfg.OPTIMIZER.OPTIM_PARAMS.NESTEROV = False
+
+        if args.scratch_dir is not None:
+            cfg.OUTPUT.OUT_DIR = args.scratch_dir
 
         cfg.freeze()
-
-        try:
-            dataset, num_channels = setup_dataset(cfg, str(pykale_path))
-        except Exception as e:
-            logger.error(f"Failed to setup dataset for run {idx}: {str(e)}")
-            failed_runs += 1
-            continue
 
         logger.info(f"[{idx+1}/{total_runs}] Run {idx}: "
                    f"LR={params['learning_rate']:.0e}, BS={params['batch_size']}, "
@@ -395,7 +420,6 @@ def main():
             cfg=cfg,
             dataset=dataset,
             num_channels=num_channels,
-            pykale_path=str(pykale_path),
             collector=collector,
             fp_precision=params['fp_precision'],
             optimiser_name=params['optimiser'],

@@ -13,6 +13,7 @@ Usage:
 """
 
 import argparse
+import gc
 import logging
 import os
 import random
@@ -119,8 +120,7 @@ def get_base_config(dataset_root, domain_pair_name, model_method):
     cfg.SOLVER.MAX_EPOCHS = 10
     cfg.SOLVER.MIN_EPOCHS = 3
     cfg.SOLVER.TRAIN_BATCH_SIZE = 16
-    cfg.SOLVER.NUM_WORKERS = 4
-    cfg.SOLVER.LOG_EVERY_N_STEPS = 10
+    cfg.SOLVER.NUM_WORKERS = 0
     cfg.SOLVER.AD_LAMBDA = True
     cfg.SOLVER.AD_LR = True
     cfg.SOLVER.INIT_LAMBDA = 1.0
@@ -143,20 +143,21 @@ def get_base_config(dataset_root, domain_pair_name, model_method):
     return cfg
 
 
-def setup_dataset(cfg, seed):
-    """Set up video dataset. Must be called per-seed as get_source_target uses seed internally."""
+def setup_dataset(cfg):
+    """Set up video dataset. Dataset is constructed identically regardless of seed."""
+    DATASET_SEED = 42  # Fixed constant — never varies
     try:
         source, target, num_classes = VideoDataset.get_source_target(
             VideoDataset(cfg.DATASET.SOURCE.upper()),
             VideoDataset(cfg.DATASET.TARGET.upper()),
-            seed,
+            DATASET_SEED,
             cfg,
         )
         dataset = VideoBiDomainDatasets(
             source,
             target,
             image_modality=cfg.DATASET.IMAGE_MODALITY,
-            seed=seed,
+            seed=DATASET_SEED,
             config_weight_type=cfg.DATASET.WEIGHT_TYPE,
             config_size_type=cfg.DATASET.SIZE_TYPE,
         )
@@ -169,9 +170,8 @@ def setup_dataset(cfg, seed):
         raise
 
 
-def get_model(cfg, dataset, num_classes, pykale_path):
+def get_model(cfg, dataset, num_classes):
     try:
-        sys.path.insert(0, os.path.join(pykale_path, "examples", "action_dann"))
         from model import get_model as get_action_model
 
         result = get_action_model(cfg, dataset, num_classes)
@@ -230,9 +230,11 @@ class EpochTimerCallback(pl.Callback):
         logger.info(f"Epoch {epoch + 1}/{trainer.max_epochs} completed in {elapsed:.1f}s")
 
 
-def run_single_experiment(cfg, dataset, num_classes, pykale_path, collector,
+def run_single_experiment(cfg, dataset, num_classes, collector,
                           fp_precision, optimiser_name, run_id, device, domain_pair_name,
                           fast_dev_run=False):
+    model = None
+    trainer = None
     try:
         if fp_precision == 'tf32':
             torch.set_float32_matmul_precision('medium')
@@ -257,7 +259,7 @@ def run_single_experiment(cfg, dataset, num_classes, pykale_path, collector,
         memory_tracker = MemoryTracker()
 
         collector.start_timer('model_setup')
-        model, train_params = get_model(cfg, dataset, num_classes, pykale_path)
+        model, train_params = get_model(cfg, dataset, num_classes)
         collector.end_timer('model_setup')
         memory_tracker.update()
 
@@ -290,7 +292,6 @@ def run_single_experiment(cfg, dataset, num_classes, pykale_path, collector,
             precision=precision_setting,
             callbacks=[checkpoint_callback, epoch_timer],
             logger=False,
-            log_every_n_steps=cfg.SOLVER.LOG_EVERY_N_STEPS,
             enable_progress_bar=False,
             enable_model_summary=False,
             fast_dev_run=fast_dev_run,
@@ -347,6 +348,16 @@ def run_single_experiment(cfg, dataset, num_classes, pykale_path, collector,
         collector.save_run()
         return False
 
+    finally:
+        # Free memory between runs to prevent leaks across 960 sequential Trainer.fit() calls
+        if trainer is not None:
+            del trainer
+        if model is not None:
+            del model
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
 
 def main():
     args = parse_args()
@@ -361,7 +372,7 @@ def main():
     }
 
     param_grid = {
-        'batch_size': [4, 8, 16, 32],
+        'batch_size': [8, 16, 32, 64],
         'optimiser': ['AdamW', 'SGD'],
         'fp_precision': ['tf32', 'bf16-mixed', 'fp16-mixed', 'fp32-true'],
         'adaptation_method': ['DAN', 'DANN', 'CDAN'],
@@ -406,6 +417,17 @@ def main():
 
     pykale_path = Path(args.pykale_path)
 
+    # Add PyKale action_dann to sys.path once (needed for model import)
+    sys.path.insert(0, os.path.join(str(pykale_path), "examples", "action_dann"))
+
+    # Load dataset once — video dataset setup is expensive and doesn't vary between runs
+    init_cfg = get_base_config(args.dataset_root, args.domain_pair, args.model_method)
+    try:
+        dataset, num_classes = setup_dataset(init_cfg)
+    except Exception as e:
+        logger.error(f"Failed to setup dataset: {str(e)}")
+        return
+
     start_time = time.time()
     successful_runs = 0
     failed_runs = 0
@@ -437,14 +459,6 @@ def main():
 
         cfg.freeze()
 
-        # Dataset must be recreated per seed (VideoDataset.get_source_target uses seed internally)
-        try:
-            dataset, num_classes = setup_dataset(cfg, params['seed'])
-        except Exception as e:
-            logger.error(f"Failed to setup dataset for run {idx}: {str(e)}")
-            failed_runs += 1
-            continue
-
         logger.info("=" * 80)
         logger.info(f"Run {idx} ({idx + 1}/{total_runs})")
         logger.info(f"Method: {params['adaptation_method']}, Precision: {params['fp_precision']}, Seed: {params['seed']}")
@@ -456,7 +470,6 @@ def main():
             cfg=cfg,
             dataset=dataset,
             num_classes=num_classes,
-            pykale_path=str(pykale_path),
             collector=collector,
             fp_precision=params['fp_precision'],
             optimiser_name=params['optimiser'],
@@ -470,10 +483,6 @@ def main():
             successful_runs += 1
         else:
             failed_runs += 1
-
-        # Clear GPU cache between runs (video models consume much more memory)
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
 
     elapsed = time.time() - start_time
     logger.info("\n" + "=" * 80)
