@@ -1,5 +1,5 @@
 # causal-ai
-### Evaluating AI workflows using Causal Testing
+### A tool for evaluating AI workflows using the Causal Testing Framework
 
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 ![GitHub License](https://img.shields.io/github/license/RSE-Sheffield/causal-ai)
@@ -27,7 +27,8 @@ The central idea of this tool is that rather than re-running expensive experimen
 
 ## Motivation
 
-Systematically evaluating the effect of configuration choices in ML pipelines — such as floating point precision, batch size, or optimiser — typically requires controlled experimentation that is expensive to run at scale on HPC systems. Causal testing offers an alternative: by modelling the expected causal structure of a pipeline and applying statistical estimation to observational data already collected from prior runs, it's possible to identify causal effects and quantify uncertainty around them.
+Systematically evaluating the effect of configuration choices in ML pipelines, such as floating point precision, batch size, or optimiser, typically requires controlled experimentation that is expensive to run at scale on HPC systems. 
+Causal testing offers an alternative: by modelling the expected causal structure of a pipeline and applying statistical estimation to observational data already collected from prior runs, it's possible to identify causal effects and quantify uncertainty around them.
 
 Some of the questions this tool is designed to answer:
 
@@ -111,12 +112,15 @@ collector.save_run()
 collector.export_data()
 ```
 
-The resultant CSV can be used directly as input to the Causal Testing Framework.
+The resultant CSV can be used directly as the runtime data input to the Causal Testing Framework.
 
 ## Project structure
 
 ```
 causal_ai/              Core package (data collector, artifact loaders, CLI)
+docs/
+  tutorial_cli.ipynb        Step-by-step CLI tutorial (recommended starting point)
+  tutorial_api.ipynb        Python API tutorial for integration and custom analysis
 examples/
   digits_dann/              Digit classification domain adaptation (MNIST → USPS)
   action_dann/              Video domain adaptation (EPIC-Kitchens)
