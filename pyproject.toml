@@ -5,8 +5,8 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "causal-ai"
 version = "0.1.0"
-description = "Causal inference for AI/ML workflows targeting PyKale pipelines"
-requires-python = ">=3.10"
+description = "A tool for evaluating AI workflows using the Causal Testing Framework"
+requires-python = ">=3.10, <3.12"
 dependencies = [
     "numpy",
     "pandas>=2.0",
