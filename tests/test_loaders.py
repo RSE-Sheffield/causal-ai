@@ -1,10 +1,8 @@
 """Tests for causal_ai.utils.loaders — loading CTF artifacts and summarising results."""
 
 import json
-from pathlib import Path
 
 import pandas as pd
-import pytest
 
 from causal_ai.utils import (
     compare_clusters,
