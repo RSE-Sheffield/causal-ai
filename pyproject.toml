@@ -11,7 +11,7 @@ dependencies = [
     "numpy",
     "pandas>=2.0",
     "matplotlib>=3.5",
-    "networkx>=3.0",
+    "networkx>=3.4.2",
     "pydot>=2.0",
 ]
 
