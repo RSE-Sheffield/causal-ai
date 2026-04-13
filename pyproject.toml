@@ -22,7 +22,7 @@ causal-ai = "causal_ai.__main__:main"
 
 # These should be everything needed to run the digits_dann / action_dann / office_multisource_adapt examples...
 examples = [
-    "torch>=2.0",
+    "torch>=2.11.0",
     "torchvision",
     "pytorch-lightning>=2.0",
     "pykale>=0.1.2",
