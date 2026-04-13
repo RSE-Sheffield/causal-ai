@@ -10,13 +10,17 @@ requires-python = ">=3.10"
 dependencies = [
     "numpy",
     "pandas>=2.0",
+    "matplotlib>=3.5",
+    "networkx>=3.0",
+    "pydot>=2.0",
 ]
 
 [project.scripts]
 causal-ai = "causal_ai.__main__:main"
 
 [project.optional-dependencies]
-# Everything needed to run the action_dann / digits_dann examples.
+
+# These should be everything needed to run the digits_dann / action_dann / office_multisource_adapt examples...
 examples = [
     "torch>=2.0",
     "torchvision",
