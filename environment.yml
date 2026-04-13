@@ -1,4 +1,4 @@
-name: new-ai-4-science
+name: ai-4-science
 channels:
   - conda-forge
 dependencies:
@@ -154,4 +154,5 @@ dependencies:
       - tzdata==2025.3
       - werkzeug==3.1.5
       - yarl==1.22.0
-prefix: /nobackup/projects/bddur53/cs1fxa/Miniforge/envs/new-ai-4-science
+      - pydot==2.0.0
+prefix: /nobackup/projects/bddur53/cs1fxa/Miniforge/envs/ai-4-science
