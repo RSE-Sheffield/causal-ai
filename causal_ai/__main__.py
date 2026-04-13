@@ -3,6 +3,7 @@
 Usage:
     python -m causal_ai summary <data_dir>
     python -m causal_ai compare <data_dir>
+    python -m causal_ai visualise --dag <dot> --results <json> [--output_dir <dir>]
 """
 
 import argparse
@@ -11,10 +12,11 @@ import logging
 import sys
 from pathlib import Path
 
-from causal_ai.main import (
+from causal_ai.utils import (
     compare_clusters,
     load_cluster_data,
     summarise_results,
+    visualise_results,
 )
 
 logger = logging.getLogger("causal_ai")
@@ -89,6 +91,20 @@ def cmd_compare(args: argparse.Namespace) -> None:
         print("\n" + json.dumps(comparison, indent=2))
 
 
+def cmd_visualise(args: argparse.Namespace) -> None:
+    """Generate visualisations of causal test results on the DAG."""
+    dag_path = Path(args.dag)
+    results_path = Path(args.results)
+    output_dir = Path(args.output_dir)
+
+    if not dag_path.is_file():
+        sys.exit(f"Error: DAG file not found: {dag_path}")
+    if not results_path.is_file():
+        sys.exit(f"Error: results file not found: {results_path}")
+
+    visualise_results(dag_path, results_path, output_dir)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="causal_ai",
@@ -107,6 +123,13 @@ def main() -> None:
     p_compare.add_argument("data_dir", help="Path to parent directory containing cluster subdirs")
     p_compare.add_argument("--json", action="store_true", help="Also print raw JSON output")
 
+    # visualise
+    p_vis = subparsers.add_parser("visualise", help="Visualise causal test results on the DAG")
+    p_vis.add_argument("--dag", required=True, help="Path to the DAG .dot file")
+    p_vis.add_argument("--results", required=True, help="Path to the causal test results JSON")
+    p_vis.add_argument("--output_dir", default="visualisations",
+                       help="Output directory for PNGs (default: visualisations/)")
+
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -118,6 +141,8 @@ def main() -> None:
         cmd_summary(args)
     elif args.command == "compare":
         cmd_compare(args)
+    elif args.command == "visualise":
+        cmd_visualise(args)
 
 
 if __name__ == "__main__":
