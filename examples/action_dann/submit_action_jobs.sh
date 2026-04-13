@@ -26,7 +26,7 @@ echo "Node: $(hostname)"
 echo "=========================================="
 
 source /mnt/parscratch/users/cs1fxa/miniforge/etc/profile.d/conda.sh
-conda activate new-ai-4-science
+conda activate ai-4-science
 
 export PYTHONDONTWRITEBYTECODE=1
 
