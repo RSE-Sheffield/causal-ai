@@ -24,7 +24,7 @@ causal-ai = "causal_ai.__main__:main"
 examples = [
     "torch>=2.0",
     "torchvision",
-    "pytorch-lightning>=2.0",
+    "pytorch-lightning>=2.6.1",
     "pykale>=0.1.2",
     "psutil",
     "yacs",
