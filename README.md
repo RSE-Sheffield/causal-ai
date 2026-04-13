@@ -2,7 +2,11 @@
 ### A tool for evaluating AI workflows using the Causal Testing Framework
 
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+![Python Version](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2FRSE-Sheffield%2Fcausal-ai%2Frefs%2Fheads%2Fmain%2Fpyproject.toml)
 ![GitHub License](https://img.shields.io/github/license/RSE-Sheffield/causal-ai)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/RSE-Sheffield/causal-ai)
+
+
 
 ```mermaid
 flowchart LR
