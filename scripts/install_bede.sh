@@ -10,7 +10,7 @@ set -euo pipefail
 
 PROJECT_DIR="/nobackup/projects/bddur53/causal-ai"
 CONDA_BASE="/nobackup/projects/bddur53/cs1fxa/Miniforge"
-CONDA_ENV="${CONDA_BASE}/envs/new-ai-4-science"
+CONDA_ENV="${CONDA_BASE}/envs/ai-4-science"
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 echo "=== Installing causal-ai ==="
@@ -38,7 +38,7 @@ fi
 # 3. Install causal-ai into the conda env
 echo "[3/4] Installing causal-ai package..."
 source "${CONDA_BASE}/etc/profile.d/conda.sh"
-conda activate new-ai-4-science
+conda activate ai-4-science
 pip install -e "${PROJECT_DIR}" --no-deps
 conda deactivate
 

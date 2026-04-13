@@ -3,7 +3,7 @@
 --        module load causal_ai/0.1.0
 
 help([[
-causal-ai v0.1.0 - Causal inference for AI/ML workflows targeting PyKale pipelines.
+causal-ai v0.1.0 - Causal inference for AI/ML workflows enabling AI for science
 
 After loading, run:
     python -m causal_ai --help
@@ -13,18 +13,18 @@ Documentation: see /nobackup/projects/bddur53/causal-ai/README.md
 
 whatis("Name:        causal-ai")
 whatis("Version:     0.1.0")
-whatis("Description: Causal inference for AI/ML workflows targeting PyKale pipelines")
+whatis("Description: Causal inference for AI/ML workflows enabling AI for science")
 
 -- Paths on Bede
 local project_root = "/nobackup/projects/bddur53/causal-ai"
 local conda_base   = "/nobackup/projects/bddur53/cs1fxa/Miniforge"
-local conda_env    = conda_base .. "/envs/new-ai-4-science"
+local conda_env    = conda_base .. "/envs/ai-4-science"
 
 -- Prevent loading multiple versions
 conflict("causal_ai")
 
 -- Conda environment activation
-setenv("CONDA_DEFAULT_ENV", "new-ai-4-science")
+setenv("CONDA_DEFAULT_ENV", "ai-4-science")
 setenv("CONDA_PREFIX", conda_env)
 setenv("CONDA_SHLVL", "1")
 
@@ -38,7 +38,7 @@ prepend_path("PYTHONPATH", project_root)
 setenv("CAUSAL_AI_HOME", project_root)
 
 if mode() == "load" then
-    LmodMessage("Loaded causal-ai v0.1.0 (conda env: new-ai-4-science)")
+    LmodMessage("Loaded causal-ai v0.1.0 (conda env: ai-4-science)")
 elseif mode() == "unload" then
     LmodMessage("Unloaded causal-ai v0.1.0")
 end
