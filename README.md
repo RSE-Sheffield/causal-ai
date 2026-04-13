@@ -53,6 +53,11 @@ For local development and running tests:
 pip install -e ".[dev]"
 ```
 
+To enable automatic linting and formatting on every commit, install the pre-commit hooks:
+```bash
+pre-commit install
+```
+
 For running experiments on HPC systems (e.g. Bede), create the full conda environment which includes PyTorch, PyKale, and all example dependencies (resolved using only the `conda-forge` channel):
 ```bash
 conda env create -f environment.yml # the environment.yml file assumes a specified prefix configured to Bede's filesystem
