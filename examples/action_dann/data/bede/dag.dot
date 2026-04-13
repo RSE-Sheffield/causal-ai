@@ -1,0 +1,28 @@
+digraph dag {
+    rankdir=LR;
+    
+    fp_precision -> gpu_memory_peak_mb;
+    fp_precision -> training_time_seconds;
+    fp_precision -> evaluation_time_seconds;
+    fp_precision -> test_target_acc;
+    fp_precision -> test_source_acc;
+    
+    batch_size -> gpu_memory_peak_mb;
+    batch_size -> training_time_seconds;
+    batch_size -> evaluation_time_seconds;
+    batch_size -> test_target_acc;
+    batch_size -> test_source_acc;
+    
+    optimiser_type -> training_time_seconds;
+    optimiser_type -> test_target_acc;
+    optimiser_type -> test_source_acc;
+    
+    learning_rate -> test_target_acc;
+    learning_rate -> test_source_acc;
+    
+    adaptation_method -> test_target_acc;
+    adaptation_method -> test_source_acc;
+    
+    seed;
+}
+

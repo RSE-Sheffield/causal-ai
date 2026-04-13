@@ -41,7 +41,9 @@ class PyKaleCausalDataCollector:
         self.current_run[f"{stage_name}_time_seconds"] = elapsed
         return elapsed
 
-    def capture_config(self, cfg, additional_params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def capture_config(
+        self, cfg, additional_params: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """Extract the causal input variables from config object script
 
         Args:
@@ -54,9 +56,11 @@ class PyKaleCausalDataCollector:
         config_data = {
             "learning_rate": float(cfg.SOLVER.BASE_LR),
             "batch_size": int(cfg.SOLVER.TRAIN_BATCH_SIZE),
-            "optimiser_type": str(cfg.SOLVER.TYPE) if hasattr(cfg.SOLVER, 'TYPE') else None,
-            "adaptation_method": str(cfg.DAN.METHOD) if hasattr(cfg, 'DAN') else None,
-            "seed": int(cfg.SOLVER.SEED) if hasattr(cfg.SOLVER, 'SEED') else None,
+            "optimiser_type": str(cfg.SOLVER.TYPE)
+            if hasattr(cfg.SOLVER, "TYPE")
+            else None,
+            "adaptation_method": str(cfg.DAN.METHOD) if hasattr(cfg, "DAN") else None,
+            "seed": int(cfg.SOLVER.SEED) if hasattr(cfg.SOLVER, "SEED") else None,
         }
         # Update the config data if additional params exist
         if additional_params:
@@ -79,8 +83,12 @@ class PyKaleCausalDataCollector:
         """
         metrics = {}
 
-        callback_metrics = trainer.callback_metrics if hasattr(trainer, 'callback_metrics') else {}
-        logged_metrics = trainer.logged_metrics if hasattr(trainer, 'logged_metrics') else {}
+        callback_metrics = (
+            trainer.callback_metrics if hasattr(trainer, "callback_metrics") else {}
+        )
+        logged_metrics = (
+            trainer.logged_metrics if hasattr(trainer, "logged_metrics") else {}
+        )
         all_metrics = {**callback_metrics, **logged_metrics}
 
         metric_mapping = {
@@ -98,13 +106,17 @@ class PyKaleCausalDataCollector:
         for key, target_key in metric_mapping.items():
             if key in all_metrics:
                 value = all_metrics[key]
-                if hasattr(value, 'item'):
+                if hasattr(value, "item"):
                     metrics[target_key] = float(value.item())
                 elif isinstance(value, (int, float)):
                     metrics[target_key] = float(value)
                 elif isinstance(value, list) and len(value) > 0:
                     last_val = value[-1]
-                    metrics[target_key] = float(last_val.item()) if hasattr(last_val, 'item') else float(last_val)
+                    metrics[target_key] = (
+                        float(last_val.item())
+                        if hasattr(last_val, "item")
+                        else float(last_val)
+                    )
 
         return metrics
 
@@ -124,11 +136,21 @@ class PyKaleCausalDataCollector:
         elif device == "gpu":
             self.current_run["gpu_memory_peak_mb"] = peak_memory_mb
 
+    def log_dataset_info(
+        self, train_size: int = 0, valid_size: int = 0, test_size: int = 0
+    ) -> None:
+        """Log dataset size information for the current run."""
+        self.current_run["train_dataset_size"] = train_size
+        self.current_run["valid_dataset_size"] = valid_size
+        self.current_run["test_dataset_size"] = test_size
+
     def save_run(self) -> None:
         """Save the current run and reset for next run"""
         if self.current_run:
             self.data_records.append(self.current_run.copy())
-            logger.info(f"Saved run {len(self.data_records)}: seed={self.current_run.get('seed', 'N/A')}")
+            logger.info(
+                f"Saved run {len(self.data_records)}: seed={self.current_run.get('seed', 'N/A')}"
+            )
             self.current_run = {}
             self.stage_timers = {}
         else:
@@ -152,11 +174,16 @@ class PyKaleCausalDataCollector:
         logger.info(f"Exported {len(df)} runs to {self.output_path}")
         logger.info(f"Columns captured: {list(df.columns)}")
 
-        logger.info("\n=== Data summary ===")
+        logger.info("\n=== Data summary  ===")
         logger.info(f"Total runs: {len(df)}")
-        logger.info(f"Unique variables combinations")
+        logger.info("Unique variables combinations")
         for col in df.columns:
-            if col.endswith('_time_seconds') or col.endswith('_mb') or 'loss' in col or 'accuracy' in col:
+            if (
+                col.endswith("_time_seconds")
+                or col.endswith("_mb")
+                or "loss" in col
+                or "accuracy" in col
+            ):
                 continue
             unique_vals = df[col].nunique()
             if unique_vals < 20:
@@ -175,11 +202,11 @@ class PyKaleCausalDataCollector:
             checkpoint_path: Optional path for checkpoint file
         """
         if checkpoint_path is None:
-            checkpoint_path = str(self.output_path).replace('.csv', '.checkpoint.csv')
+            checkpoint_path = str(self.output_path).replace(".csv", ".checkpoint.csv")
 
         checkpoint_path = Path(checkpoint_path)
         checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
 
         df = pd.DataFrame(self.data_records)
         df.to_csv(checkpoint_path, index=False)
-        logger.info(f"Checkpoint saved: {len(df)} runs to {checkpoint_path}")
+        logger.info(f"Checkpoint saved; {len(df)} runs to {checkpoint_path}")

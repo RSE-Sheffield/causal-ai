@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "causal-ai"
+version = "0.1.0"
+description = "Causal inference for AI/ML workflows targeting PyKale pipelines"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "pandas>=2.0",
+    "matplotlib>=3.5",
+    "networkx>=3.0",
+    "pydot>=2.0",
+]
+
+[project.scripts]
+causal-ai = "causal_ai.__main__:main"
+
+[project.optional-dependencies]
+
+# These should be everything needed to run the digits_dann / action_dann / office_multisource_adapt examples...
+examples = [
+    "torch>=2.0",
+    "torchvision",
+    "pytorch-lightning>=2.0",
+    "pykale>=0.1.2",
+    "psutil",
+    "yacs",
+    "pyyaml",
+    "scikit-learn",
+    "scipy",
+    "scikit-image",
+    "pillow",
+    "tensorboard",
+    "tqdm",
+]
+
+dev = [
+    "pytest",
+    "ruff",
+    "pre-commit",
+]
+
+[tool.setuptools.packages.find]
+include = ["causal_ai*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
