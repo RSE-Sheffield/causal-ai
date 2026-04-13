@@ -12,7 +12,7 @@ dependencies = [
     "pandas>=2.0",
     "matplotlib>=3.5",
     "networkx>=3.0",
-    "pydot>=2.0",
+    "pydot>=4.0.1",
 ]
 
 [project.scripts]
