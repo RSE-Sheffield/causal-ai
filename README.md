@@ -27,6 +27,9 @@ flowchart LR
 This repository contains `causal-ai`, a tool for evaluating AI/machine learning workflows using the [Causal Testing Framework (CTF)](https://github.com/CITCOM-project/CausalTestingFramework). It was developed by [University of Sheffield Research Software Engineers](https://rse.shef.ac.uk/) as part of the [N8 CIR AI4Science](https://gtr.ukri.org/projects?ref=UKRI2699) project for the [Bede HPC cluster](https://n8cir.org.uk/). This codebase also includes a set of case studies built on [PyKale](https://pykale.github.io/) pipelines.
 
 The central idea of this tool is that rather than re-running expensive experiments, users/researchers can apply causal inference retrospectively to data already collected from prior workflow runs to identify what actually drives model behaviour, both functionally (e.g. accuracy, loss) and non-functionally (e.g. training time, memory usage, numerical stability).
+
+For a guided introduction, see the step-by-step tutorials in `docs/`: [`tutorial_cli.ipynb`](docs/tutorial_cli.ipynb) covers the command-line interface and is the recommended starting point, while [`tutorial_api.ipynb`](docs/tutorial_api.ipynb) covers the Python API for more advanced use cases.
+
 > [!NOTE]
 > The PyKale framework was chosen as a representative example. The provided data collection scripts can be modified and applied to other AI/ML frameworks, such as PyTorch.
 
