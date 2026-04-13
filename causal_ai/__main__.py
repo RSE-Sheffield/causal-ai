@@ -73,8 +73,10 @@ def cmd_compare(args: argparse.Namespace) -> None:
 
     for name, summary in comparison["per_cluster"].items():
         print(f"\n[{name}]")
-        print(f"  Total: {summary['total']}  Passed: {summary['passed']}  "
-              f"Failed: {summary['failed_count']}  Skipped: {summary['skipped_count']}")
+        print(
+            f"  Total: {summary['total']}  Passed: {summary['passed']}  "
+            f"Failed: {summary['failed_count']}  Skipped: {summary['skipped_count']}"
+        )
         if summary["failed_tests"]:
             print("  Failed:")
             for t in summary["failed_tests"]:
@@ -110,25 +112,42 @@ def main() -> None:
         prog="causal_ai",
         description="Causal inference for AI/ML workflows",
     )
-    parser.add_argument("-v", "--verbose", action="store_true", help="Enable debug logging")
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Enable debug logging"
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     # summary
-    p_summary = subparsers.add_parser("summary", help="Summarise results for one cluster")
+    p_summary = subparsers.add_parser(
+        "summary", help="Summarise results for one cluster"
+    )
     p_summary.add_argument("data_dir", help="Path to a cluster data directory")
-    p_summary.add_argument("--json", action="store_true", help="Also print raw JSON output")
+    p_summary.add_argument(
+        "--json", action="store_true", help="Also print raw JSON output"
+    )
 
     # compare
     p_compare = subparsers.add_parser("compare", help="Compare results across clusters")
-    p_compare.add_argument("data_dir", help="Path to parent directory containing cluster subdirs")
-    p_compare.add_argument("--json", action="store_true", help="Also print raw JSON output")
+    p_compare.add_argument(
+        "data_dir", help="Path to parent directory containing cluster subdirs"
+    )
+    p_compare.add_argument(
+        "--json", action="store_true", help="Also print raw JSON output"
+    )
 
     # visualise
-    p_vis = subparsers.add_parser("visualise", help="Visualise causal test results on the DAG")
+    p_vis = subparsers.add_parser(
+        "visualise", help="Visualise causal test results on the DAG"
+    )
     p_vis.add_argument("--dag", required=True, help="Path to the DAG .dot file")
-    p_vis.add_argument("--results", required=True, help="Path to the causal test results JSON")
-    p_vis.add_argument("--output_dir", default="visualisations",
-                       help="Output directory for PNGs (default: visualisations/)")
+    p_vis.add_argument(
+        "--results", required=True, help="Path to the causal test results JSON"
+    )
+    p_vis.add_argument(
+        "--output_dir",
+        default="visualisations",
+        help="Output directory for PNGs (default: visualisations/)",
+    )
 
     args = parser.parse_args()
 

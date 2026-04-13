@@ -22,7 +22,6 @@ from typing import Any, Dict, List
 
 import matplotlib.pyplot as plt
 import networkx as nx
-import numpy as np
 from matplotlib.lines import Line2D
 
 logger = logging.getLogger(__name__)
@@ -220,19 +219,48 @@ def draw_test_on_dag(
 
     # Legend
     legend_handles = [
-        Line2D([0], [0], marker="o", color="w", markerfacecolor="C1",
-               markersize=9, markeredgecolor="black", label="Treatment"),
-        Line2D([0], [0], marker="o", color="w", markerfacecolor="C0",
-               markersize=9, markeredgecolor="black", label="Outcome"),
-        Line2D([0], [0], marker="o", color="w", markerfacecolor="C4",
-               markersize=9, markeredgecolor="black", label="Adjustment set"),
+        Line2D(
+            [0],
+            [0],
+            marker="o",
+            color="w",
+            markerfacecolor="C1",
+            markersize=9,
+            markeredgecolor="black",
+            label="Treatment",
+        ),
+        Line2D(
+            [0],
+            [0],
+            marker="o",
+            color="w",
+            markerfacecolor="C0",
+            markersize=9,
+            markeredgecolor="black",
+            label="Outcome",
+        ),
+        Line2D(
+            [0],
+            [0],
+            marker="o",
+            color="w",
+            markerfacecolor="C4",
+            markersize=9,
+            markeredgecolor="black",
+            label="Adjustment set",
+        ),
         Line2D([], [], color="C2", ls="-", lw=1.5, label="Passed (in DAG)"),
         Line2D([], [], color="C2", ls="--", lw=1.5, label="Passed (not in DAG)"),
         Line2D([], [], color="C3", ls="-", lw=1.5, label="Failed (in DAG)"),
         Line2D([], [], color="C3", ls="--", lw=1.5, label="Failed (not in DAG)"),
     ]
-    ax.legend(handles=legend_handles, loc="lower right", fontsize=7,
-              framealpha=0.9, edgecolor="0.8")
+    ax.legend(
+        handles=legend_handles,
+        loc="lower right",
+        fontsize=7,
+        framealpha=0.9,
+        edgecolor="0.8",
+    )
 
     status = "Skipped" if skipped else ("Passed" if passed else "Failed")
     ax.set_title(f"Test {test_index}: {test['name']}  [{status}]", fontsize=9)
@@ -280,10 +308,23 @@ def draw_summary_heatmap(
 
     bar_height = 0.7
     for i, (label, status) in enumerate(zip(labels, statuses)):
-        ax.barh(i, 1, color=colours[status], height=bar_height,
-                edgecolor="white", linewidth=0.5)
-        ax.text(0.5, i, status_text[status], ha="center", va="center",
-                fontsize=8, color="white")
+        ax.barh(
+            i,
+            1,
+            color=colours[status],
+            height=bar_height,
+            edgecolor="white",
+            linewidth=0.5,
+        )
+        ax.text(
+            0.5,
+            i,
+            status_text[status],
+            ha="center",
+            va="center",
+            fontsize=8,
+            color="white",
+        )
 
     ax.set_yticks(range(n_tests))
     ax.set_yticklabels(labels, fontsize=7, fontfamily="monospace")
@@ -294,7 +335,8 @@ def draw_summary_heatmap(
     ax.set_title(
         f"Causal Test Results Summary\n"
         f"Passed: {n_passed}   Failed: {n_failed}   Skipped: {n_skipped}   Total: {n_tests}",
-        fontsize=10, pad=12,
+        fontsize=10,
+        pad=12,
     )
 
     # Legend outside the plot area
@@ -303,8 +345,7 @@ def draw_summary_heatmap(
         plt.Rectangle((0, 0), 1, 1, fc="#d9534f", label="Failed"),
         plt.Rectangle((0, 0), 1, 1, fc="#999999", label="Skipped"),
     ]
-    ax.legend(handles=legend_handles, loc="lower right", fontsize=8,
-              edgecolor="0.8")
+    ax.legend(handles=legend_handles, loc="lower right", fontsize=8, edgecolor="0.8")
 
     ax.spines[:].set_visible(False)
     ax.tick_params(left=False)

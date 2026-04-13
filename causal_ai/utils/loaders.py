@@ -7,7 +7,7 @@ and summarise causal test outcomes across HPC clusters.
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import pandas as pd
 
@@ -101,7 +101,9 @@ def compare_clusters(
     Returns:
         Dictionary with per-cluster summaries and cross-cluster comparison.
     """
-    summaries = {name: summarise_results(results) for name, results in cluster_results.items()}
+    summaries = {
+        name: summarise_results(results) for name, results in cluster_results.items()
+    }
 
     # Find tests that passed on one cluster but failed on another
     cluster_names = list(summaries.keys())
