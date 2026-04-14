@@ -1,0 +1,19 @@
+#%Module1.0
+
+proc ModulesHelp { } {
+    puts stderr "causal-ai v0.1.0"
+}
+
+module-whatis "causal-ai v0.1.0 - AI for science"
+
+set root /nobackup/projects/bddur53/causal-ai
+set conda_env /nobackup/projects/bddur53/cs1fxa/Miniforge/envs/ai-4-science
+
+conflict causal_ai
+
+prepend-path PATH $conda_env/bin
+prepend-path PYTHONPATH $root
+
+setenv CAUSAL_AI_HOME $root
+setenv CONDA_PREFIX $conda_env
+setenv CONDA_DEFAULT_ENV ai-4-science

@@ -39,12 +39,12 @@ fi
 echo "[3/4] Installing causal-ai package..."
 source "${CONDA_BASE}/etc/profile.d/conda.sh"
 conda activate ai-4-science
-pip install -e "${PROJECT_DIR}" --no-deps
+pip install -e "${PROJECT_DIR}"
 conda deactivate
 
 # 4. Verify modulefile is in place
 echo "[4/4] Verifying modulefile..."
-MODULEFILE="${PROJECT_DIR}/modulefiles/causal_ai/0.1.0.lua"
+MODULEFILE="${PROJECT_DIR}/modulefiles/causal_ai/0.1.0"
 if [ -f "${MODULEFILE}" ]; then
     echo "Modulefile OK: ${MODULEFILE}"
 else
